@@ -141,6 +141,9 @@ def create_clip(start_stamp, end_stamp):
         frame_stamp = int(''.join(filter(str.isdigit, file_name)))
         if frame_stamp >= start_stamp and frame_stamp <= end_stamp:
             frames.append(file_name)
+    if len(frames) == 0:
+        print('No corresponding video clips found.')
+        return
     frames = sorted(frames)
     output_video_path_front = 'output_video_clip_front.mp4'  # Output video path
     create_video(frames, output_video_path_front, image_folder_path, frame_rate, flip=True)
@@ -154,6 +157,9 @@ def create_clip(start_stamp, end_stamp):
         frame_stamp = int(''.join(filter(str.isdigit, file_name)))
         if frame_stamp >= start_stamp and frame_stamp <= end_stamp:
             frames.append(file_name)
+    if len(frames) == 0:
+        print('No corresponding video clips found.')
+        return
     frames = sorted(frames)
     output_video_path_rear = 'output_video_clip_rear.mp4'  # Output video path
     create_video(frames, output_video_path_rear, image_folder_path, frame_rate)
