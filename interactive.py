@@ -4,6 +4,7 @@ import tkinter as tk
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+import argparse
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 
@@ -168,69 +169,74 @@ def create_clip(start_stamp, end_stamp):
     play_two_videos(output_video_path_front, output_video_path_rear, frame_rate)
 
 
-folder_path = '//ad.monash.edu/home/User009/hjia0058/Desktop/CS_data/23_12_05_16_11/'
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Example script with argparse")
+    parser.add_argument("-f", "--f", type=str, help="Folder name")
+    args = parser.parse_args()
 
-# Frame rate (Hz) for ultrasound distance and camera
-distance_frame_rate = 10
-camera_frame_rate = 3
+    folder_path = 'Z:/CS_data/{}/'.format(args.f)
 
-distance_data = pd.read_csv(os.path.join(folder_path, 'Distance/distances.txt'), delimiter=', ', header=None)
-time_stamp = distance_data.iloc[:, 0].to_numpy()
-right_dist = distance_data.iloc[:, 1].to_numpy()
-# back_dist = distance_data.iloc[:, 3].to_numpy()
+    # Frame rate (Hz) for ultrasound distance and camera
+    distance_frame_rate = 10
+    camera_frame_rate = 3
 
-# Process data
-processed_right_dist = calculate_moving_average(right_dist, 10)
-processed_right_dist = calculate_median_filter(processed_right_dist, 29)
-# processed_back_dist = calculate_median_filter(back_dist, 9)
+    distance_data = pd.read_csv(os.path.join(folder_path, 'Distance/distances.txt'), delimiter=', ', header=None)
+    time_stamp = distance_data.iloc[:, 0].to_numpy()
+    right_dist = distance_data.iloc[:, 1].to_numpy()
+    # back_dist = distance_data.iloc[:, 3].to_numpy()
 
-fig, axs = plt.subplots(2)
+    # Process data
+    processed_right_dist = calculate_moving_average(right_dist, 10)
+    processed_right_dist = calculate_median_filter(processed_right_dist, 29)
+    # processed_back_dist = calculate_median_filter(back_dist, 9)
 
-# Change x unit to seconds
-x = np.arange(len(right_dist))/distance_frame_rate
+    fig, axs = plt.subplots(2)
 
-# Plot the first line
-axs[0].plot(x, right_dist)
-axs[0].set_xlabel('Time (s)')
-axs[0].set_ylabel('Distance (mm)')
-axs[0].set_title('Original right distance')
+    # Change x unit to seconds
+    x = np.arange(len(right_dist))/distance_frame_rate
 
-# Plot the second line
-axs[1].plot(processed_right_dist)
-axs[1].set_ylabel('Distance (mm)')
-axs[1].set_title('Processed right distance')
+    # Plot the first line
+    axs[0].plot(x, right_dist)
+    axs[0].set_xlabel('Time (s)')
+    axs[0].set_ylabel('Distance (mm)')
+    axs[0].set_title('Original right distance')
 
-start_stamp = -1
-end_stamp = -1
+    # Plot the second line
+    axs[1].plot(processed_right_dist)
+    axs[1].set_ylabel('Distance (mm)')
+    axs[1].set_title('Processed right distance')
 
-def on_click(event):
-    global start_stamp
-    global end_stamp
-    if event.inaxes == axs[0]:
-        x_clicked = event.xdata
-        print(f"Clicked on x = {x_clicked}")
-        if start_stamp < 0:
-            start_stamp = x_clicked
-        else:
-            end_stamp = x_clicked
-            print("Create clip for {0:.2f} seconds".format(end_stamp - start_stamp))
-            start_stamp = time_stamp[int(start_stamp*distance_frame_rate)]
-            end_stamp = time_stamp[int(end_stamp*distance_frame_rate)]
-            create_clip(start_stamp, end_stamp)
-            start_stamp = -1
-            end_stamp = -1
+    start_stamp = -1
+    end_stamp = -1
 
-# # Plot the first line
-# axs[0].plot(right_dist)
-# axs[0].set_title('Right distance')
+    def on_click(event):
+        global start_stamp
+        global end_stamp
+        if event.inaxes == axs[0]:
+            x_clicked = event.xdata
+            print(f"Clicked on x = {x_clicked}")
+            if start_stamp < 0:
+                start_stamp = x_clicked
+            else:
+                end_stamp = x_clicked
+                print("Create clip for {0:.2f} seconds".format(end_stamp - start_stamp))
+                start_stamp = time_stamp[int(start_stamp*distance_frame_rate)]
+                end_stamp = time_stamp[int(end_stamp*distance_frame_rate)]
+                create_clip(start_stamp, end_stamp)
+                start_stamp = -1
+                end_stamp = -1
 
-# # Plot the second line
-# axs[1].plot(back_dist)
-# axs[1].set_title('Back distance')
+    # # Plot the first line
+    # axs[0].plot(right_dist)
+    # axs[0].set_title('Right distance')
 
-plt.tight_layout()  # Adjust layout to prevent overlap
+    # # Plot the second line
+    # axs[1].plot(back_dist)
+    # axs[1].set_title('Back distance')
 
-# Connect the event handler function to the 'button_press_event' event
-fig.canvas.mpl_connect('button_press_event', on_click)
+    plt.tight_layout()  # Adjust layout to prevent overlap
 
-plt.show()
+    # Connect the event handler function to the 'button_press_event' event
+    fig.canvas.mpl_connect('button_press_event', on_click)
+
+    plt.show()
