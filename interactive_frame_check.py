@@ -175,17 +175,9 @@ def find_image(distance_stamp):
     Input: Ultrasound distance time stamp (int)
     Return: Corresponding image file name (str)
     '''
-    image_folder_path = os.path.join(folder_path, 'Images/Front')
-    file_names = os.listdir(image_folder_path)
-    file_names = [f for f in file_names if f.endswith('.jpg')]
-    front_image = min(file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-distance_stamp))
-
-    image_folder_path = os.path.join(folder_path, 'Images/Rear')
-    file_names = os.listdir(image_folder_path)
-    file_names = [f for f in file_names if f.endswith('.jpg')]
-    rear_image = min(file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-distance_stamp))
+    front_image = min(front_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-distance_stamp))
+    rear_image = min(rear_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-distance_stamp))
     print(front_image, rear_image)
-
     return front_image, rear_image
     
 
@@ -204,6 +196,7 @@ def show_images(front_image, rear_image, index):
     height = width//2
 
     image1 = cv2.flip(image1, 0)
+    image1 = cv2.flip(image1, 1)
     image1 = cv2.resize(image1, (width, height))  # Replace width and height with desired dimensions
     image2 = cv2.resize(image2, (width, height))
 
@@ -220,7 +213,7 @@ def show_images(front_image, rear_image, index):
             cv2.destroyAllWindows()
         elif key == ord('a'):
             # Action for left
-            print("Left arrow key pressed")
+            print("Next frame")
             index -= 1
             y_clicked = right_dist[index]
             marker.set_data(x[index], y_clicked)
@@ -229,7 +222,7 @@ def show_images(front_image, rear_image, index):
             show_images(front_image, rear_image, index)
         elif key == ord('d'):
             # Action for right
-            print("Right arrow key pressed")
+            print("Last frame")
             index += 1
             y_clicked = right_dist[index]
             marker.set_data(x[index], y_clicked)
@@ -259,6 +252,16 @@ if __name__ == "__main__":
     processed_right_dist = calculate_median_filter(processed_right_dist, 29)
     # processed_back_dist = calculate_median_filter(back_dist, 9)
 
+    # Get file_names for front and rear image files
+    front_image_folder_path = os.path.join(folder_path, 'Images/Front')
+    front_file_names = os.listdir(front_image_folder_path)
+    front_file_names = [f for f in front_file_names if f.endswith('.jpg')]
+
+    rear_image_folder_path = os.path.join(folder_path, 'Images/Rear')
+    rear_file_names = os.listdir(rear_image_folder_path)
+    rear_file_names = [f for f in rear_file_names if f.endswith('.jpg')]
+
+    # Initialise plots
     fig, axs = plt.subplots(2)
 
     # Change x unit to seconds
