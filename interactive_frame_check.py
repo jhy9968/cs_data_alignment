@@ -213,7 +213,7 @@ def show_images(front_image, rear_image, index):
             cv2.destroyAllWindows()
         elif key == ord('a'):
             # Action for left
-            print("Next frame")
+            print("Last frame")
             index -= 1
             y_clicked = right_dist[index]
             marker.set_data(x[index], y_clicked)
@@ -222,7 +222,7 @@ def show_images(front_image, rear_image, index):
             show_images(front_image, rear_image, index)
         elif key == ord('d'):
             # Action for right
-            print("Last frame")
+            print("Next frame")
             index += 1
             y_clicked = right_dist[index]
             marker.set_data(x[index], y_clicked)
