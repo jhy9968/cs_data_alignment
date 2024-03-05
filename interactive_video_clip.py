@@ -63,6 +63,7 @@ def create_video(image_files, output_video_path, folder_path, frame_rate=10, fli
         frame = cv2.imread(image_path)
         if flip:
             frame = cv2.flip(frame, 0)
+            frame = cv2.flip(frame, 1)
 
         # Resize the frame if necessary
         # frame = cv2.resize(frame, (frame_width, frame_height))

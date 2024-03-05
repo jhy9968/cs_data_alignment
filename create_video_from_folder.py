@@ -24,6 +24,7 @@ def create_video_from_images(image_folder, output_video_path, fps=30, flip=False
         img = cv2.imread(os.path.join(image_folder, image_file))
         if flip:
             img = cv2.flip(img, 0)
+            img = cv2.flip(img, 1)
         video_writer.write(img)
         progress_bar.update(1)
 
@@ -88,10 +89,8 @@ def play_two_videos_up_down_resized(video_path1, video_path2, target_frame_rate)
     cv2.destroyAllWindows()
 
 
-
-
 # Set the folder containing the images
-image_folder = '//ad.monash.edu/home/User009/hjia0058/Desktop/CS_data/Box1_SD_1B/Images/'
+image_folder = 'S:/R-MNHS-SPHPM-EPM-PHTrauma/SMSR-RSIF/Data/All Data - Has to be cleaned/Processed_Data/User_2/23_01_16_19_52/Images'
 
 # Specify frames per second (fps)
 fps = 3
@@ -99,13 +98,13 @@ fps = 3
 # Set the output video path
 output_video_path_front = 'output_video_front.mp4'
 # Call the function to create the video
-# create_video_from_images(os.path.join(image_folder, 'Front'), os.path.join(image_folder, output_video_path_front), fps, flip=True)
+create_video_from_images(os.path.join(image_folder, 'Front/Right'), os.path.join(image_folder, output_video_path_front), fps, flip=True)
 
 
 # Set the output video path
 output_video_path_rear = 'output_video_rear.mp4'
 # Call the function to create the video
-# create_video_from_images(os.path.join(image_folder, 'Rear'), os.path.join(image_folder, output_video_path_rear), fps)
+create_video_from_images(os.path.join(image_folder, 'Rear/Right'), os.path.join(image_folder, output_video_path_rear), fps)
 
 
 # Play
