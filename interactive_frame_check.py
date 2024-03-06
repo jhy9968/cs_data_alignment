@@ -7,8 +7,9 @@ from scipy.signal import medfilt
 
 
 class Frame_check():
-    def __init__(self, f) -> None:
+    def __init__(self, f, ffc) -> None:
         self.folder_path = 'S:/R-MNHS-SPHPM-EPM-PHTrauma/SMSR-RSIF/Data/All Data - Has to be cleaned/Processed_Data/User_2/{}/'.format(f)
+        self.ffc = ffc
 
         # Frame rate (Hz) for ultrasound distance and camera
         self.distance_frame_rate = 10
@@ -129,6 +130,10 @@ class Frame_check():
         image_folder_path = os.path.join(self.folder_path, 'Images/Rear/Right')
         self.image2 = plt.imread(os.path.join(image_folder_path, rear_image))
 
+        # Flip front camera
+        if self.ffc:
+            self.image1 = np.flipud(np.fliplr(self.image1))
+
         # Show images
         self.axs[0, 1].imshow(self.image1)
         self.axs[0, 1].axis('off')  # Hide axes
@@ -193,6 +198,7 @@ class Frame_check():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="For folder name")
     parser.add_argument("-f", "--f", type=str, help="Folder name")
+    parser.add_argument("-ffc", "--ffc", type=int, default=0, help="Flip front camera. To flip the front camera, -ffc 1. Otherwise, -ffc 0")
     args = parser.parse_args()
 
-    frame_check = Frame_check(args.f)
+    frame_check = Frame_check(args.f, args.ffc)
