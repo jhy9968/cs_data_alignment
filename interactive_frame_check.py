@@ -10,6 +10,7 @@ class Frame_check():
     def __init__(self, f, ffc) -> None:
         self.folder_path = '/home/hjia0058/Documents/CS_data/{}/'.format(f)
         self.ffc = ffc
+        self.auto_play = False
 
         # Frame rate (Hz) for ultrasound distance and camera
         self.distance_frame_rate = 10
@@ -22,7 +23,15 @@ class Frame_check():
 
         for i, check in enumerate(self.dist_check):
             if check == "OVER_LIMIT_ERR":
-                self.right_dist[i] = 7500
+                self.right_dist[i] = 4500
+            elif check == "UNDER_LIMIT_ERR":
+                self.right_dist[i] = 30
+            elif check == "CHECKSUM_ERR":
+                self.right_dist[i] = -30
+            elif check == "SERIAL_ERR":
+                self.right_dist[i] = -100
+            elif check == "NO_DATA_ERR":
+                self.right_dist[i] = -200
 
         # Process data
         self.processed_right_dist = self.calculate_moving_average(self.right_dist, 10)
@@ -202,6 +211,31 @@ class Frame_check():
                 self.axs[0, 1].cla()  # Clear axis
                 self.axs[1, 1].cla()  # Clear axis
                 self.show_images(front_image, rear_image)
+    #     elif event.key == ' ':
+    #         if not self.auto_play:
+    #             self.auto_play = True
+    #             self.auto_play_frame()
+    #         else:
+    #             self.auto_play = False
+
+    # def auto_play_frame(self):
+    #     while self.auto_play:
+    #         self.index += 1
+    #         y_clicked = self.right_dist[self.index]
+    #         self.marker.set_data(self.x[self.index], y_clicked)
+    #         plt.draw()
+    #         front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
+    #         if front_image == self.front_image:
+    #             self.marker.set_color('r')
+    #             print("Same image")
+    #         else:
+    #             self.marker.set_color((0, 0.8, 0))
+    #             self.front_image = front_image
+    #             self.rear_image = rear_image
+    #             print(front_image, rear_image)
+    #             self.axs[0, 1].cla()  # Clear axis
+    #             self.axs[1, 1].cla()  # Clear axis
+    #             self.show_images(front_image, rear_image)
 
 
 if __name__ == "__main__":
