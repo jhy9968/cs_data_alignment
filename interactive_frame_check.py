@@ -8,27 +8,32 @@ from scipy.signal import medfilt
 
 class Frame_check():
     def __init__(self, f, ffc) -> None:
-        self.folder_path = 'S:/R-MNHS-SPHPM-EPM-PHTrauma/SMSR-RSIF/Data/All Data - Has to be cleaned/Processed_Data/User_2/{}/'.format(f)
+        self.folder_path = '/home/hjia0058/Documents/CS_data/{}/'.format(f)
         self.ffc = ffc
 
         # Frame rate (Hz) for ultrasound distance and camera
         self.distance_frame_rate = 10
         self.camera_frame_rate = 3
 
-        self.distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/distance.txt'), delimiter=', ', header=None)
+        self.distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/distances.txt'), delimiter=', ', header=None)
         self.time_stamp = self.distance_data.iloc[:, 0].to_numpy()
         self.right_dist = self.distance_data.iloc[:, 1].to_numpy()
+        self.dist_check = self.distance_data.iloc[:, 2].to_numpy()
+
+        for i, check in enumerate(self.dist_check):
+            if check == "OVER_LIMIT_ERR":
+                self.right_dist[i] = 7500
 
         # Process data
         self.processed_right_dist = self.calculate_moving_average(self.right_dist, 10)
         self.processed_right_dist = self.calculate_median_filter(self.processed_right_dist, 29)
 
         # Get file_names for front and rear image files
-        self.front_image_folder_path = os.path.join(self.folder_path, 'Images/Front/Right')
+        self.front_image_folder_path = os.path.join(self.folder_path, 'Images/Rear')
         self.front_file_names = os.listdir(self.front_image_folder_path)
         self.front_file_names = [f for f in self.front_file_names if f.endswith('.jpg')]
 
-        self.rear_image_folder_path = os.path.join(self.folder_path, 'Images/Rear/Right')
+        self.rear_image_folder_path = os.path.join(self.folder_path, 'Images/Front')
         self.rear_file_names = os.listdir(self.rear_image_folder_path)
         self.rear_file_names = [f for f in self.rear_file_names if f.endswith('.jpg')]
 
@@ -118,16 +123,16 @@ class Frame_check():
         Input: Ultrasound distance time stamp (int)
         Return: Corresponding image file name (str)
         '''
-        front_image = min(self.front_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-distance_stamp))
-        rear_image = min(self.rear_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-distance_stamp))
+        front_image = min(self.front_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-int(distance_stamp)))
+        rear_image = min(self.rear_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-int(distance_stamp)))
         # print(front_image, rear_image)
         return front_image, rear_image
         
 
     def show_images(self, front_image, rear_image):
-        image_folder_path = os.path.join(self.folder_path, 'Images/Front/Right')
+        image_folder_path = os.path.join(self.folder_path, 'Images/Rear')
         self.image1 = plt.imread(os.path.join(image_folder_path, front_image))
-        image_folder_path = os.path.join(self.folder_path, 'Images/Rear/Right')
+        image_folder_path = os.path.join(self.folder_path, 'Images/Front')
         self.image2 = plt.imread(os.path.join(image_folder_path, rear_image))
 
         # Flip front camera
@@ -170,8 +175,10 @@ class Frame_check():
             plt.draw()
             front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
             if front_image == self.front_image:
+                self.marker.set_color('r')
                 print("Same image")
             else:
+                self.marker.set_color((0, 0.8, 0))
                 self.front_image = front_image
                 self.rear_image = rear_image
                 print(front_image, rear_image)
@@ -185,8 +192,10 @@ class Frame_check():
             plt.draw()
             front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
             if front_image == self.front_image:
+                self.marker.set_color('r')
                 print("Same image")
             else:
+                self.marker.set_color((0, 0.8, 0))
                 self.front_image = front_image
                 self.rear_image = rear_image
                 print(front_image, rear_image)
