@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 import argparse
+import time
+import keyboard
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 
@@ -66,6 +68,7 @@ class Frame_check():
 
         # Initialise plots
         self.fig, self.axs = plt.subplots(2, 2)
+        # plt.ion()
 
         # Change x unit to seconds
         self.x = np.arange(len(self.right_dist))/self.distance_frame_rate
@@ -165,6 +168,9 @@ class Frame_check():
         if self.ffc:
             self.image1 = np.flipud(np.fliplr(self.image1))
 
+        self.axs[0, 1].cla()  # Clear axis
+        self.axs[1, 1].cla()  # Clear axis
+
         # Show images
         self.axs[0, 1].imshow(self.image1)
         self.axs[0, 1].axis('off')  # Hide axes
@@ -186,6 +192,7 @@ class Frame_check():
         y_clicked = self.rear_dist[self.index]
         self.marker_rear.set_data(self.x[self.index], y_clicked)
         self.rear_title.set_text(f'Rear distance: {y_clicked}mm')
+
 
     def on_click(self, event):
         if event.inaxes == self.axs[0, 0] or event.inaxes == self.axs[1, 0]:
@@ -219,8 +226,6 @@ class Frame_check():
                 self.front_image = front_image
                 self.rear_image = rear_image
                 print(front_image, rear_image)
-                self.axs[0, 1].cla()  # Clear axis
-                self.axs[1, 1].cla()  # Clear axis
                 self.show_images(front_image, rear_image)
         elif event.key == 'd':
             self.index += 1
@@ -237,34 +242,39 @@ class Frame_check():
                 self.front_image = front_image
                 self.rear_image = rear_image
                 print(front_image, rear_image)
-                self.axs[0, 1].cla()  # Clear axis
-                self.axs[1, 1].cla()  # Clear axis
                 self.show_images(front_image, rear_image)
-    #     elif event.key == ' ':
-    #         if not self.auto_play:
-    #             self.auto_play = True
-    #             self.auto_play_frame()
-    #         else:
-    #             self.auto_play = False
+        elif event.key == 'e':
+            print('Play')
+            self.auto_play_frame()
 
-    # def auto_play_frame(self):
-    #     while self.auto_play:
-    #         self.index += 1
-    #         y_clicked = self.right_dist[self.index]
-    #         self.marker.set_data(self.x[self.index], y_clicked)
-    #         plt.draw()
-    #         front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
-    #         if front_image == self.front_image:
-    #             self.marker.set_color('r')
-    #             print("Same image")
-    #         else:
-    #             self.marker.set_color((0, 0.8, 0))
-    #             self.front_image = front_image
-    #             self.rear_image = rear_image
-    #             print(front_image, rear_image)
-    #             self.axs[0, 1].cla()  # Clear axis
-    #             self.axs[1, 1].cla()  # Clear axis
-    #             self.show_images(front_image, rear_image)
+
+    def auto_play_frame(self):
+        while 1:
+
+            if keyboard.is_pressed('space'): # TODO: Build better interrupts
+                print("Stop")
+                break
+
+            self.index += 1
+            self.update_markers()
+            plt.draw()
+            
+
+            # Check if space bar is pressed to interrupt the loop            
+            front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
+            if front_image == self.front_image:
+                self.marker_right.set_color('r')
+                self.marker_rear.set_color('r')
+                print("Same image")
+            else:
+                self.marker_right.set_color((0, 0.8, 0))
+                self.marker_rear.set_color((0, 0.8, 0))
+                self.front_image = front_image
+                self.rear_image = rear_image
+                print(front_image, rear_image)
+                self.show_images(front_image, rear_image)
+            plt.show(block=False)
+            plt.pause(0.1)
 
 
 if __name__ == "__main__":
