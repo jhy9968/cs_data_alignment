@@ -1,9 +1,9 @@
 import os
+import cv2
+import argparse
+import keyboard
 import numpy as np
 import pandas as pd
-import argparse
-import time
-import keyboard
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 
@@ -18,7 +18,7 @@ class Frame_check():
         self.distance_frame_rate = 10
         self.camera_frame_rate = 3
 
-        self.distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/distances.txt'), delimiter=', ', header=None)
+        self.distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/distances.txt'), delimiter=', ', header=None, engine='python')
         self.time_stamp = self.distance_data.iloc[:, 0].to_numpy()
         self.right_dist = self.distance_data.iloc[:, 1].to_numpy()
         self.right_dist_check = self.distance_data.iloc[:, 2].to_numpy()
@@ -160,23 +160,28 @@ class Frame_check():
 
     def show_images(self, front_image, rear_image):
         image_folder_path = os.path.join(self.folder_path, 'Images/Front')
-        self.image1 = plt.imread(os.path.join(image_folder_path, front_image))
+        self.image1 = cv2.imread(os.path.join(image_folder_path, front_image))
+        
         image_folder_path = os.path.join(self.folder_path, 'Images/Rear')
-        self.image2 = plt.imread(os.path.join(image_folder_path, rear_image))
+        self.image2 = cv2.imread(os.path.join(image_folder_path, rear_image))
 
         # Flip front camera
         if self.ffc:
-            self.image1 = np.flipud(np.fliplr(self.image1))
+            self.image1 = cv2.flip(cv2.flip(self.image1, 1), 0)
 
         self.axs[0, 1].cla()  # Clear axis
         self.axs[1, 1].cla()  # Clear axis
 
+        # Convert BGR to RGB for display
+        self.image1 = cv2.cvtColor(self.image1, cv2.COLOR_BGR2RGB)
+        self.image2 = cv2.cvtColor(self.image2, cv2.COLOR_BGR2RGB)
+
         # Show images
         self.axs[0, 1].imshow(self.image1)
-        self.axs[0, 1].axis('off')  # Hide axes
+        self.axs[0, 1].axis('off')
 
         self.axs[1, 1].imshow(self.image2)
-        self.axs[1, 1].axis('off')  # Hide axes
+        self.axs[1, 1].axis('off')
 
         # Title for images
         self.axs[0, 1].set_title('Front camera image')
@@ -186,11 +191,11 @@ class Frame_check():
     def update_markers(self):
         # For right marker
         y_clicked = self.right_dist[self.index]
-        self.marker_right.set_data(self.x[self.index], y_clicked)
+        self.marker_right.set_data([self.x[self.index]], [y_clicked])
         self.right_title.set_text(f'Right distance: {y_clicked}mm')
         # For rear marker
         y_clicked = self.rear_dist[self.index]
-        self.marker_rear.set_data(self.x[self.index], y_clicked)
+        self.marker_rear.set_data([self.x[self.index]], [y_clicked])
         self.rear_title.set_text(f'Rear distance: {y_clicked}mm')
 
 
@@ -208,73 +213,56 @@ class Frame_check():
             self.show_images(front_image, rear_image)
 
 
+    def update_plot(self):
+        self.update_markers()
+        plt.draw()
+        front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
+        if front_image == self.front_image:
+            self.marker_right.set_color('r')
+            self.marker_rear.set_color('r')
+            print("Same image")
+        else:
+            self.marker_right.set_color((0, 0.8, 0))
+            self.marker_rear.set_color((0, 0.8, 0))
+            self.front_image = front_image
+            self.rear_image = rear_image
+            print(front_image, rear_image)
+            self.show_images(front_image, rear_image)
+
+
     def on_key_press(self, event):
         if event.key == 'q':
             plt.close()  # Close the figure if 'q' is pressed
-        elif event.key == 'a':
-            self.index -= 1
-            self.update_markers()
-            plt.draw()
-            front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
-            if front_image == self.front_image:
-                self.marker_right.set_color('r')
-                self.marker_rear.set_color('r')
-                print("Same image")
+        elif event.key == 'a' or event.key == 'd':
+            if event.key == 'a':
+                self.index -= 1
             else:
-                self.marker_right.set_color((0, 0.8, 0))
-                self.marker_rear.set_color((0, 0.8, 0))
-                self.front_image = front_image
-                self.rear_image = rear_image
-                print(front_image, rear_image)
-                self.show_images(front_image, rear_image)
-        elif event.key == 'd':
-            self.index += 1
-            self.update_markers()
-            plt.draw()
-            front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
-            if front_image == self.front_image:
-                self.marker_right.set_color('r')
-                self.marker_rear.set_color('r')
-                print("Same image")
-            else:
-                self.marker_right.set_color((0, 0.8, 0))
-                self.marker_rear.set_color((0, 0.8, 0))
-                self.front_image = front_image
-                self.rear_image = rear_image
-                print(front_image, rear_image)
-                self.show_images(front_image, rear_image)
+                self.index += 1
+            self.update_plot()
         elif event.key == 'e':
             print('Play')
             self.auto_play_frame()
 
 
     def auto_play_frame(self):
-        while 1:
+        global stop_flag
+        stop_flag = False
+        keyboard.on_press(on_space_pressed)
 
-            if keyboard.is_pressed('space'): # TODO: Build better interrupts
-                print("Stop")
-                break
-
+        while not stop_flag:
             self.index += 1
-            self.update_markers()
-            plt.draw()
-            
-
-            # Check if space bar is pressed to interrupt the loop            
-            front_image, rear_image = self.find_image(self.time_stamp[int(self.x[self.index]*self.distance_frame_rate)])
-            if front_image == self.front_image:
-                self.marker_right.set_color('r')
-                self.marker_rear.set_color('r')
-                print("Same image")
-            else:
-                self.marker_right.set_color((0, 0.8, 0))
-                self.marker_rear.set_color((0, 0.8, 0))
-                self.front_image = front_image
-                self.rear_image = rear_image
-                print(front_image, rear_image)
-                self.show_images(front_image, rear_image)
+            self.update_plot()
             plt.show(block=False)
             plt.pause(0.1)
+
+        keyboard.unhook_all()  # Unhook the keyboard listener when done
+
+
+def on_space_pressed(event):
+        if event.name == 'space' or event.name == 'q':
+            print("Stop")
+            global stop_flag
+            stop_flag = True
 
 
 if __name__ == "__main__":
@@ -283,4 +271,5 @@ if __name__ == "__main__":
     parser.add_argument("-ffc", "--ffc", type=int, default=0, help="Flip front camera. To flip the front camera, -ffc 1. Otherwise, -ffc 0")
     args = parser.parse_args()
 
+    # Start a frame check
     frame_check = Frame_check(args.f, args.ffc)
