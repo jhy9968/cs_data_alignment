@@ -10,13 +10,12 @@ from scipy.signal import medfilt
 
 class Frame_check():
     def __init__(self, f, ffc) -> None:
-        self.folder_path = 'Z:/CS_data/{}/'.format(f)
+        self.folder_path = 'data/{}/'.format(f)
         self.ffc = ffc
         self.auto_play = False
 
-        # Frame rate (Hz) for ultrasound distance and camera
+        # Frame rate (Hz) for ultrasound distance sensor
         self.distance_frame_rate = 10
-        self.camera_frame_rate = 3
 
         self.distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/distances.txt'), delimiter=', ', header=None, engine='python')
         self.time_stamp = self.distance_data.iloc[:, 0].to_numpy()
