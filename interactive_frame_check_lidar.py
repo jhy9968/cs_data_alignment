@@ -15,7 +15,7 @@ class Frame_check():
         self.auto_play = False
 
         # Frame rate (Hz) for ultrasound distance sensor
-        self.distance_frame_rate = 10
+        self.distance_frame_rate = 100
 
         self.right_distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/right_distances.txt'), delimiter=', ', header=None, engine='python')
         self.rear_distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/rear_distances.txt'), delimiter=', ', header=None, engine='python')
@@ -65,8 +65,9 @@ class Frame_check():
         self.rear_title = self.axs[1, 0].set_title(f'Rear distance: {self.rear_dist[0]}mm')
 
         # Show image
-        self.index = 0
-        front_image, rear_image = self.find_image(self.right_time_stamp[self.index])
+        self.right_index = 0
+        self.rear_index = 0
+        front_image, rear_image = self.find_image(self.right_time_stamp[self.right_index])
         self.show_images(front_image, rear_image)
 
         # Title for images
@@ -169,12 +170,12 @@ class Frame_check():
 
     def update_markers(self):
         # For right marker
-        y_clicked = self.right_dist[self.index]
-        self.marker_right.set_data([self.x_right[self.index]], [y_clicked])
+        y_clicked = self.right_dist[self.right_index]
+        self.marker_right.set_data([self.x_right[self.right_index]], [y_clicked])
         self.right_title.set_text(f'Right distance: {y_clicked}mm')
         # For rear marker
-        y_clicked = self.rear_dist[self.index]
-        self.marker_rear.set_data([self.x_rear[self.index]], [y_clicked])
+        y_clicked = self.rear_dist[self.rear_index]
+        self.marker_rear.set_data([self.x_rear[self.rear_index]], [y_clicked])
         self.rear_title.set_text(f'Rear distance: {y_clicked}mm')
 
 
@@ -184,7 +185,9 @@ class Frame_check():
             x_clicked = event.xdata
             print(f"Clicked on x = {x_clicked}")
             # Update index
-            self.index = np.argmin(np.abs(self.x_right - x_clicked))
+            self.right_index = np.argmin(np.abs(self.x_right - x_clicked))
+            self.anchor_time_stamp = self.right_time_stamp[self.right_index]
+            self.rear_index = np.argmin(np.abs(self.rear_time_stamp - self.anchor_time_stamp))
             # Update markers
             self.update_markers()
             plt.draw()
@@ -196,7 +199,9 @@ class Frame_check():
             x_clicked = event.xdata
             print(f"Clicked on x = {x_clicked}")
             # Update index
-            self.index = np.argmin(np.abs(self.x_rear - x_clicked))
+            self.rear_index = np.argmin(np.abs(self.x_rear - x_clicked))
+            self.anchor_time_stamp = self.rear_time_stamp[self.rear_index]
+            self.right_index = np.argmin(np.abs(self.right_time_stamp - self.anchor_time_stamp))
             # Update markers
             self.update_markers()
             plt.draw()
@@ -209,9 +214,9 @@ class Frame_check():
         self.update_markers()
         plt.draw()
         if self.anchor == "right":
-            front_image, rear_image = self.find_image(self.right_time_stamp[int(self.x_rear[self.index]*self.distance_frame_rate)])
+            front_image, rear_image = self.find_image(self.right_time_stamp[int(self.x_rear[self.right_index]*self.distance_frame_rate)])
         else:
-            front_image, rear_image = self.find_image(self.rear_time_stamp[int(self.x_rear[self.index]*self.distance_frame_rate)])
+            front_image, rear_image = self.find_image(self.rear_time_stamp[int(self.x_rear[self.rear_index]*self.distance_frame_rate)])
         if front_image == self.front_image and rear_image == self.rear_image:
             self.marker_right.set_color('r')
             self.marker_rear.set_color('r')
@@ -230,9 +235,11 @@ class Frame_check():
             plt.close()  # Close the figure if 'q' is pressed
         elif event.key == 'a' or event.key == 'd':
             if event.key == 'a':
-                self.index -= 1
+                self.right_index -= 1
+                self.rear_index -= 1
             else:
-                self.index += 1
+                self.right_index += 1
+                self.rear_index += 1
             self.update_plot()
         elif event.key == 'e':
             print('Play')
@@ -245,10 +252,11 @@ class Frame_check():
         keyboard.on_press(on_space_pressed)
 
         while not stop_flag:
-            self.index += 1
+            self.right_index += 1
+            self.rear_index += 1
             self.update_plot()
             plt.show(block=False)
-            plt.pause(0.1)
+            plt.pause(1/self.distance_frame_rate)
 
         keyboard.unhook_all()  # Unhook the keyboard listener when done
 
