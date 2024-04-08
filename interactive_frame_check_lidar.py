@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
+from matplotlib.patches import Rectangle
 
 
 class Frame_check():
@@ -163,9 +164,28 @@ class Frame_check():
         self.axs[1, 1].imshow(self.image2)
         self.axs[1, 1].axis('off')
 
+        # Add lidar box
+        self.show_lidar_box(self.image2.shape)
+
         # Title for images
         self.axs[0, 1].set_title('Front camera image')
         self.axs[1, 1].set_title('Rear camera image')
+
+    
+    def show_lidar_box(self, imshape):
+        center_x = imshape[1]/4
+        center_y = imshape[0]/2
+        box_width = 100
+        box_height = 100
+        box = Rectangle((center_x - box_width/2, center_y - box_height/2), box_width, box_height, fill=False, edgecolor='r')
+        self.axs[1, 1].add_patch(box)
+
+        center_x = 3*imshape[1]/4
+        center_y = imshape[0]/2
+        box_width = 100
+        box_height = 100
+        box = Rectangle((center_x - box_width/2, center_y - box_height/2), box_width, box_height, fill=False, edgecolor='r')
+        self.axs[1, 1].add_patch(box)
     
 
     def update_markers(self):
