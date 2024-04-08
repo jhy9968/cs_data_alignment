@@ -17,43 +17,12 @@ class Frame_check():
         # Frame rate (Hz) for ultrasound distance sensor
         self.distance_frame_rate = 10
 
-        # self.distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/distances.txt'), delimiter=', ', header=None, engine='python')
-        # self.time_stamp = self.distance_data.iloc[:, 0].to_numpy()
-        # self.right_dist = self.distance_data.iloc[:, 1].to_numpy()
-        # self.right_dist_check = self.distance_data.iloc[:, 2].to_numpy()
-        # self.rear_dist = self.distance_data.iloc[:, 3].to_numpy()
-        # self.rear_dist_check = self.distance_data.iloc[:, 4].to_numpy()
-
         self.right_distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/right_distances.txt'), delimiter=', ', header=None, engine='python')
         self.rear_distance_data = pd.read_csv(os.path.join(self.folder_path, 'Distance/rear_distances.txt'), delimiter=', ', header=None, engine='python')
         self.right_time_stamp = self.right_distance_data.iloc[:, 0].to_numpy()
         self.rear_time_stamp = self.rear_distance_data.iloc[:, 0].to_numpy()
         self.right_dist = self.right_distance_data.iloc[:, 1].to_numpy()
         self.rear_dist = self.rear_distance_data.iloc[:, 1].to_numpy()
-
-        # for i, check in enumerate(self.right_dist_check):
-        #     if check == "OVER_LIMIT_ERR":
-        #         self.right_dist[i] = 4500
-        #     elif check == "UNDER_LIMIT_ERR":
-        #         self.right_dist[i] = 30
-        #     elif check == "CHECKSUM_ERR":
-        #         self.right_dist[i] = -30
-        #     elif check == "SERIAL_ERR":
-        #         self.right_dist[i] = -100
-        #     elif check == "NO_DATA_ERR":
-        #         self.right_dist[i] = -200
-
-        # for i, check in enumerate(self.rear_dist_check):
-        #     if check == "OVER_LIMIT_ERR":
-        #         self.rear_dist[i] = 4500
-        #     elif check == "UNDER_LIMIT_ERR":
-        #         self.rear_dist[i] = 30
-        #     elif check == "CHECKSUM_ERR":
-        #         self.rear_dist[i] = -30
-        #     elif check == "SERIAL_ERR":
-        #         self.rear_dist[i] = -100
-        #     elif check == "NO_DATA_ERR":
-        #         self.rear_dist[i] = -200
 
         # # Process data
         # self.processed_right_dist = self.calculate_moving_average(self.right_dist, 10)
@@ -71,6 +40,9 @@ class Frame_check():
         # Initialise front and rear image filename
         self.front_image = None
         self.rear_image = None
+
+        # Set anchor for frame checking ("right" or "rear")
+        self.anchor = "right"
 
         # Initialise plots
         self.fig, self.axs = plt.subplots(2, 2)
@@ -163,7 +135,7 @@ class Frame_check():
         rear_image = min(self.rear_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-int(distance_stamp)))
         # print(front_image, rear_image)
         return front_image, rear_image
-        
+
 
     def show_images(self, front_image, rear_image):
         image_folder_path = os.path.join(self.folder_path, 'Images/Front')
@@ -208,6 +180,7 @@ class Frame_check():
 
     def on_click(self, event):
         if event.inaxes == self.axs[0, 0]:
+            self.anchor = "right"
             x_clicked = event.xdata
             print(f"Clicked on x = {x_clicked}")
             # Update index
@@ -216,9 +189,10 @@ class Frame_check():
             self.update_markers()
             plt.draw()
             # Show image
-            front_image, rear_image = self.find_image(self.time_stamp[int(x_clicked*self.distance_frame_rate)])
+            front_image, rear_image = self.find_image(self.right_time_stamp[int(x_clicked*self.distance_frame_rate)])
             self.show_images(front_image, rear_image)
         elif event.inaxes == self.axs[1, 0]:
+            self.anchor = "rear"
             x_clicked = event.xdata
             print(f"Clicked on x = {x_clicked}")
             # Update index
@@ -227,15 +201,18 @@ class Frame_check():
             self.update_markers()
             plt.draw()
             # Show image
-            front_image, rear_image = self.find_image(self.time_stamp[int(x_clicked*self.distance_frame_rate)])
+            front_image, rear_image = self.find_image(self.rear_time_stamp[int(x_clicked*self.distance_frame_rate)])
             self.show_images(front_image, rear_image)
 
 
     def update_plot(self):
         self.update_markers()
         plt.draw()
-        front_image, rear_image = self.find_image(self.time_stamp[int(self.x_rear[self.index]*self.distance_frame_rate)])
-        if front_image == self.front_image:
+        if self.anchor == "right":
+            front_image, rear_image = self.find_image(self.right_time_stamp[int(self.x_rear[self.index]*self.distance_frame_rate)])
+        else:
+            front_image, rear_image = self.find_image(self.rear_time_stamp[int(self.x_rear[self.index]*self.distance_frame_rate)])
+        if front_image == self.front_image and rear_image == self.rear_image:
             self.marker_right.set_color('r')
             self.marker_rear.set_color('r')
             print("Same image")
