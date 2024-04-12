@@ -28,6 +28,8 @@ class Frame_check():
         # # Process data
         # self.processed_right_dist = self.calculate_moving_average(self.right_dist, 10)
         # self.processed_right_dist = self.calculate_median_filter(self.processed_right_dist, 29)
+        self.right_dist[self.right_dist == 0] = 12000
+        self.rear_dist[self.rear_dist == 0] = 12000
 
         # Get file_names for front and rear image files
         self.front_image_folder_path = os.path.join(self.folder_path, 'Images/Front')
