@@ -13,7 +13,7 @@ This repo contains a simple program that can be used to manually check the ultra
 3. **Run Program:**
    - Open a terminal within the "cs_data_alignment" folder, then execute the following command:
      ```
-     python .\interactive_frame_check.py -f [change this to data name] -ffc [1 or 0]
+     python .\interactive_frame_check_lidar.py -f [change this to data name] -ffc [1 or 0]
      ```
      - '-f [change this to data name]'
        - Replace "[change this to data name]" with the name of your data folder.

@@ -3,7 +3,8 @@ Please place the data in the following folder structure:
 data <-- current folder
 ├── [data_name_1] <-- change to the actual name of data
 │   ├── Distance
-│   │   └── distances.txt
+│   │   ├── right_distances.txt
+│   │   └── rear_distances.txt
 │   └── Images
 │       ├── Front
 │       │   ├── Front_xxx.jpg
