@@ -28,6 +28,8 @@ class Frame_check():
         # # Process data
         # self.processed_right_dist = self.calculate_moving_average(self.right_dist, 10)
         # self.processed_right_dist = self.calculate_median_filter(self.processed_right_dist, 29)
+        self.right_dist[self.right_dist == 0] = 12000
+        self.rear_dist[self.rear_dist == 0] = 12000
 
         # Get file_names for front and rear image files
         self.front_image_folder_path = os.path.join(self.folder_path, 'Images/Front')
@@ -173,19 +175,19 @@ class Frame_check():
 
     
     def show_lidar_box(self, imshape):
-        center_x = imshape[1]/4
-        center_y = imshape[0]/2
-        box_width = 100
-        box_height = 100
+        center_x = 722.5
+        center_y = 311
+        box_width = 66
+        box_height = 90
         box = Rectangle((center_x - box_width/2, center_y - box_height/2), box_width, box_height, fill=False, edgecolor='r')
-        self.axs[1, 1].add_patch(box)
+        self.axs[0, 1].add_patch(box)
 
-        center_x = 3*imshape[1]/4
-        center_y = imshape[0]/2
-        box_width = 100
-        box_height = 100
+        center_x = 1836
+        center_y = 280
+        box_width = 66
+        box_height = 90
         box = Rectangle((center_x - box_width/2, center_y - box_height/2), box_width, box_height, fill=False, edgecolor='r')
-        self.axs[1, 1].add_patch(box)
+        self.axs[0, 1].add_patch(box)
     
 
     def update_markers(self):
