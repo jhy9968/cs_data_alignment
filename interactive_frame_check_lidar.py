@@ -28,8 +28,8 @@ class Frame_check():
         # # Process data
         # self.processed_right_dist = self.calculate_moving_average(self.right_dist, 10)
         # self.processed_right_dist = self.calculate_median_filter(self.processed_right_dist, 29)
-        self.right_dist[self.right_dist == 0] = 12000
-        self.rear_dist[self.rear_dist == 0] = 12000
+        self.right_dist[self.right_dist == 0] = 1200
+        self.rear_dist[self.rear_dist == 0] = 1200
 
         # Get file_names for front and rear image files
         self.front_image_folder_path = os.path.join(self.folder_path, 'Images/Front')
@@ -58,14 +58,26 @@ class Frame_check():
         # Plot the first line
         self.axs[0, 0].plot(self.x_right, self.right_dist)
         self.axs[0, 0].set_xlabel('Time (s)')
-        self.axs[0, 0].set_ylabel('Distance (mm)')
-        self.right_title = self.axs[0, 0].set_title(f'Right distance: {self.right_dist[0]}mm')
+        self.axs[0, 0].set_ylabel('Distance (cm)')
+        if self.right_dist[0] == 1200:
+            self.right_title = self.axs[0, 0].set_title(f'Right distance: Out of range')
+        else:
+            self.right_title = self.axs[0, 0].set_title(f'Right distance: {self.right_dist[0]}cm = {self.right_dist[0]/100}m')
 
         # Plot the second line
         self.axs[1, 0].plot(self.x_rear, self.rear_dist)
         self.axs[1, 0].set_xlabel('Time (s)')
-        self.axs[1, 0].set_ylabel('Distance (mm)')
-        self.rear_title = self.axs[1, 0].set_title(f'Rear distance: {self.rear_dist[0]}mm')
+        self.axs[1, 0].set_ylabel('Distance (cm)')
+        if self.rear_dist[0] == 1200:
+            self.rear_title = self.axs[1, 0].set_title(f'Rear distance: Out of range')
+        else:
+            self.rear_title = self.axs[1, 0].set_title(f'Rear distance: {self.rear_dist[0]}cm = {self.rear_dist[0]/100}m')
+
+        # Add cursor markers
+        # Initial position for marker in right dist plot
+        self.marker_right, = self.axs[0, 0].plot(self.x_right[0], self.right_dist[0], marker='o', color='red', markersize=5)
+        # Initial position for marker in rear dist plot
+        self.marker_rear, = self.axs[1, 0].plot(self.x_rear[0], self.rear_dist[0], marker='o', color='red', markersize=5)
 
         # Show image
         self.right_index = 0
@@ -76,12 +88,6 @@ class Frame_check():
         # Title for images
         self.axs[0, 1].set_title('Front camera image')
         self.axs[1, 1].set_title('Rear camera image')
-
-        # Add cursor markers
-        # Initial position for marker in right dist plot
-        self.marker_right, = self.axs[0, 0].plot(self.x_right[0], self.right_dist[0], marker='o', color='red', markersize=5)
-        # Initial position for marker in rear dist plot
-        self.marker_rear, = self.axs[1, 0].plot(self.x_rear[0], self.rear_dist[0], marker='o', color='red', markersize=5)
 
         plt.tight_layout()  # Adjust layout to prevent overlap
 
@@ -135,9 +141,23 @@ class Frame_check():
         Input: Ultrasound distance time stamp (int)
         Return: Corresponding image file name (str)
         '''
+        print(f"Distance time stamp:\t{distance_stamp}")
         front_image = min(self.front_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-int(distance_stamp)))
         rear_image = min(self.rear_file_names, key=lambda x:abs(int(''.join(filter(str.isdigit, x)))-int(distance_stamp)))
-        # print(front_image, rear_image)
+        ctimestamp = ''.join(filter(str.isdigit, front_image))
+        if front_image == self.front_image and rear_image == self.rear_image:
+            self.marker_right.set_color('r')
+            self.marker_rear.set_color('r')
+            print("Same image")
+            print(f'Time difference:\t{(int(ctimestamp)-int(distance_stamp))/1e9:.2f} seconds')
+        else:
+            self.show_images(front_image, rear_image)
+            self.marker_right.set_color((0, 0.8, 0))
+            self.marker_rear.set_color((0, 0.8, 0))
+            self.front_image = front_image
+            self.rear_image = rear_image
+            print(f'Camera time stamp:\t{ctimestamp}')
+            print(f'Time difference:\t{(int(ctimestamp)-int(distance_stamp))/1e9:.2f} seconds')
         return front_image, rear_image
 
 
@@ -194,18 +214,24 @@ class Frame_check():
         # For right marker
         y_clicked = self.right_dist[self.right_index]
         self.marker_right.set_data([self.x_right[self.right_index]], [y_clicked])
-        self.right_title.set_text(f'Right distance: {y_clicked}mm')
+        if y_clicked == 1200:
+            self.right_title.set_text(f'Right distance: Out of range')
+        else:
+            self.right_title.set_text(f'Right distance: {y_clicked}cm = {y_clicked/100}m')
         # For rear marker
         y_clicked = self.rear_dist[self.rear_index]
         self.marker_rear.set_data([self.x_rear[self.rear_index]], [y_clicked])
-        self.rear_title.set_text(f'Rear distance: {y_clicked}mm')
+        if y_clicked == 1200:
+            self.rear_title.set_text(f'Rear distance: Out of range')
+        else:
+            self.rear_title.set_text(f'Rear distance: {y_clicked}cm = {y_clicked/100}m')
 
 
     def on_click(self, event):
         if event.inaxes == self.axs[0, 0]:
             self.anchor = "right"
             x_clicked = event.xdata
-            print(f"Clicked on x = {x_clicked}")
+            print(f"\nClicked at:\t\t{x_clicked:.2f} seconds")
             # Update index
             self.right_index = np.argmin(np.abs(self.x_right - x_clicked))
             self.anchor_time_stamp = self.right_time_stamp[self.right_index]
@@ -215,11 +241,21 @@ class Frame_check():
             plt.draw()
             # Show image
             front_image, rear_image = self.find_image(self.right_time_stamp[int(x_clicked*self.distance_frame_rate)])
-            self.show_images(front_image, rear_image)
+            # if front_image == self.front_image and rear_image == self.rear_image:
+            #     self.marker_right.set_color('r')
+            #     self.marker_rear.set_color('r')
+            #     print("Same image")
+            # else:
+            #     self.marker_right.set_color((0, 0.8, 0))
+            #     self.marker_rear.set_color((0, 0.8, 0))
+            #     self.front_image = front_image
+            #     self.rear_image = rear_image
+            #     print('Camera time stamp:\t'+''.join(filter(str.isdigit, front_image)))
+            #     self.show_images(front_image, rear_image)
         elif event.inaxes == self.axs[1, 0]:
             self.anchor = "rear"
             x_clicked = event.xdata
-            print(f"Clicked on x = {x_clicked}")
+            print(f"\nClicked at:\t\t{x_clicked:.2f} seconds")
             # Update index
             self.rear_index = np.argmin(np.abs(self.x_rear - x_clicked))
             self.anchor_time_stamp = self.rear_time_stamp[self.rear_index]
@@ -229,7 +265,17 @@ class Frame_check():
             plt.draw()
             # Show image
             front_image, rear_image = self.find_image(self.rear_time_stamp[int(x_clicked*self.distance_frame_rate)])
-            self.show_images(front_image, rear_image)
+            # if front_image == self.front_image and rear_image == self.rear_image:
+            #     self.marker_right.set_color('r')
+            #     self.marker_rear.set_color('r')
+            #     print("Same image")
+            # else:
+            #     self.show_images(front_image, rear_image)
+            #     self.marker_right.set_color((0, 0.8, 0))
+            #     self.marker_rear.set_color((0, 0.8, 0))
+            #     self.front_image = front_image
+            #     self.rear_image = rear_image
+            #     print('Camera time stamp:\t'+''.join(filter(str.isdigit, front_image)))
 
 
     def update_plot(self):
@@ -239,17 +285,17 @@ class Frame_check():
             front_image, rear_image = self.find_image(self.right_time_stamp[int(self.x_rear[self.right_index]*self.distance_frame_rate)])
         else:
             front_image, rear_image = self.find_image(self.rear_time_stamp[int(self.x_rear[self.rear_index]*self.distance_frame_rate)])
-        if front_image == self.front_image and rear_image == self.rear_image:
-            self.marker_right.set_color('r')
-            self.marker_rear.set_color('r')
-            print("Same image")
-        else:
-            self.marker_right.set_color((0, 0.8, 0))
-            self.marker_rear.set_color((0, 0.8, 0))
-            self.front_image = front_image
-            self.rear_image = rear_image
-            print(front_image, rear_image)
-            self.show_images(front_image, rear_image)
+        # if front_image == self.front_image and rear_image == self.rear_image:
+        #     self.marker_right.set_color('r')
+        #     self.marker_rear.set_color('r')
+        #     print("Same image")
+        # else:
+        #     self.marker_right.set_color((0, 0.8, 0))
+        #     self.marker_rear.set_color((0, 0.8, 0))
+        #     self.front_image = front_image
+        #     self.rear_image = rear_image
+        #     print('Camera time stamp:\t'+''.join(filter(str.isdigit, front_image)))
+        #     self.show_images(front_image, rear_image)
 
 
     def on_key_press(self, event):
@@ -262,6 +308,7 @@ class Frame_check():
             else:
                 self.right_index += 1
                 self.rear_index += 1
+            print('\n')
             self.update_plot()
         elif event.key == 'e':
             print('Play')
